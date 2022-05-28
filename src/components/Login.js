@@ -1,5 +1,5 @@
 import { useContext, useState } from 'react';
-import { Link , useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import styled from 'styled-components';
 
@@ -9,7 +9,6 @@ import UserContext from '../contexts/UserContext.js';
 
 export default function Login() {
     const { setUser } = useContext(UserContext);
-    const [ warn, setWarn ] = useState(true);
     const [error, setError] = useState("");
     const [credentials, setCredentials] = useState({
         email: '',
@@ -20,51 +19,56 @@ export default function Login() {
 
     function login() {
         if (credentials.email !== "" && credentials.password !== "") {
-            setWarn(true);
+            setError("");
             const request = axios.post('https://mock-api.bootcamp.respondeai.com.br/api/v2/trackit/auth/login', credentials);
-            request.then((response) => {
+            request.then((res) => {
                 setUser({
-                    id: response.data.id,
-                    name: response.data.name,
-                    image: response.data.image,
-                    email: response.data.email,
-                    password: response.data.password,
-                    token: response.data.token
+                    id: res.data.id,
+                    name: res.data.name,
+                    image: res.data.image,
+                    email: res.data.email,
+                    password: res.data.password,
+                    token: res.data.token
                 });
                 navigate('/habitos');
             })
-            request.catch((error) => {
-                if (error.response.status === 401) {
-                    setError("Usuário não encontrado. Verifique os dados e tente novamente!");
-                    setCredentials({
-                        email: '',
-                        password: ''
-                    });
-                }
-                else if (error.response.status === 422) {
-                    setError("Dados inválidos. Tente novamente!");
-                    setCredentials({
-                        email: '',
-                        password: ''
-                    });
+            request.catch((err) => {
+                switch (err.response.status) {
+                    case 401:
+                        setError("Usuário não encontrado. Verifique os dados e tente novamente!");
+                        setCredentials({
+                            email: '',
+                            password: ''
+                        });
+                        break;
+                    case 422:
+                        setError("Dados inválidos. Tente novamente!");
+                        setCredentials({
+                            email: '',
+                            password: ''
+                        });
+                        break;
+                    case 500:
+                        setError("Servidor caiu, tente novamente mais tarde...");
+                        break;
+                    default:
+                        setError("Verifique os dados e tente novamente!");
                 }
             })
         } else {
-            setError("");
-            setWarn(false);
+            setError("Favor preencher os campos faltantes acima!");
         }
     }
 
     return (
         <Container>
             <Image src={logo} alt="logo" />
-            <Input type="text" placeholder="email" onChange={(e) => setCredentials({ ...credentials, email: e.target.value })} />
-            <Input type="password" placeholder="senha" onChange={(e) => setCredentials({ ...credentials, password: e.target.value })} />
+            <Input type="text" placeholder="email" onChange={(e) => setCredentials({ ...credentials, email: e.target.value })} value={credentials.email} />
+            <Input type="password" placeholder="senha" onChange={(e) => setCredentials({ ...credentials, password: e.target.value })} value={credentials.password} />
             <LoginButton onClick={login}> Entrar </LoginButton>
             <StyledLink to="/cadastro">
                 <Register> Não tem uma conta? Cadastre-se! </Register>
             </StyledLink>
-            <Warn display={warn ? "none" : "inline"}> Favor preencher os campos faltantes acima! </Warn>
             <Warn display={error === "" ? "none" : "inline"}> {error} </Warn>
         </Container>
     )
@@ -134,6 +138,7 @@ const Warn = styled.p`
     text-align: center;
     margin: 20px 0 0 0;
     font-size: 14px;
+    font-weight: 700;
     color: #CC0000;
     display: ${props => props.display};
 `;
