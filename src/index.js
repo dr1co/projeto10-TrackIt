@@ -2,6 +2,7 @@ import ReactDOM from 'react-dom';
 import { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
+import './assets/css/reset.css';
 import Login from './components/Login.js';
 import Register from './components/Register.js';
 import Habits from './components/Habits.js';
