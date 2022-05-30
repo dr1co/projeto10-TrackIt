@@ -8,13 +8,15 @@ import Footer from './Footer.js';
 
 import UserContext from '../contexts/UserContext.js';
 
+import trash from '../assets/media/trashicon.png';
+
 export default function Habits() {
     const [habitCreation, setHabitCreation] = useState(false);
+    const [habitList, setHabitList] = useState([]);
     const [habit, setHabit] = useState({
         name: "",
         days: []
     })
-    const [habitList, setHabitList] = useState([]);
 
     const { user, setUser } = useContext(UserContext);
     
@@ -28,14 +30,6 @@ export default function Habits() {
         }
     }
 
-    function cancelHabitCreation() {
-        setHabit({
-            name: "",
-            days: []
-        })
-        setHabitCreation(false);
-    }
-
     function getHabits() {
         const promise = axios.get('https://mock-api.bootcamp.respondeai.com.br/api/v2/trackit/habits', {
             headers: {
@@ -43,7 +37,7 @@ export default function Habits() {
             }
         });
         promise.then((res) => {
-            console.log(res);
+            setHabitList(res.data);
         })
     }
 
@@ -55,12 +49,31 @@ export default function Habits() {
                 }
             });
             request.then((res) => {
-                console.log(res.data);
-                getHabits();    
+                setHabit({
+                    name: "",
+                    days: []
+                });
+                setHabitCreation(false);
+                getHabits();
             });
             request.catch((err) => {
                 console.log(err.response.status);
             });
+        }
+    }
+
+    function deleteHabit(id) {
+        let confirmation = window.confirm("Tem certeza que deseja deletar este hábito? (essa ação não pode ser desfeita!");
+        if (confirmation) {
+            const request = axios.delete(`https://mock-api.bootcamp.respondeai.com.br/api/v2/trackit/habits/${id}`, {
+                headers: {
+                    'Authorization': `Bearer ${user.token}`
+                }
+            });
+            request.then(getHabits);
+            request.catch((err) => {
+                console.log(err.response.status);
+            })
         }
     }
 
@@ -80,7 +93,7 @@ export default function Habits() {
                 <HabitForm display={habitCreation ? "block" : "none"}>
                     <InputHabit type="text" placeholder="nome do hábito" value={habit.name} onChange={(e) => setHabit({...habit, name: e.target.value})} />
                     <Weekdays>
-                        {weekdays.map((day, index) => <Weekday
+                        {weekdays.map((day, index) => <SelectWeekday
                         key={index}
                         day={day}
                         number={index+1}
@@ -88,19 +101,18 @@ export default function Habits() {
                         setHabit={setHabit} /> )}
                     </Weekdays>
                     <ActionButtons>
-                        <Cancel onClick={cancelHabitCreation}> Cancelar </Cancel>
+                        <Cancel onClick={toggleHabitCreation}> Cancelar </Cancel>
                         <Save onClick={postHabit}> Salvar </Save>
                     </ActionButtons>
                 </HabitForm>
+                <HabitList habitList={habitList} weekdays={weekdays} deleteHabit={deleteHabit} />
             </Container>
             <Footer />
         </>
     )
 }
 
-function Weekday({ day, number, habit, setHabit }) {
-    const [selected, setSelected] = useState(false);
-
+function SelectWeekday({ day, number, habit, setHabit }) {
     const array = habit.days;
 
     function toggleDay(i) {
@@ -121,6 +133,58 @@ function Weekday({ day, number, habit, setHabit }) {
     } else {
         return (
             <Day bgcolor="#FFFFFF" color="#D4D4D4" onClick={() => toggleDay(number)}>
+                {day}
+            </Day>
+        )
+    }
+}
+
+function HabitList({ habitList, weekdays, deleteHabit }) {
+    if(habitList.length === 0) {
+        return (
+            <HabitContainer>
+                <p>Você não tem nenhum hábito cadastrado ainda. Adicione um hábito para começar a Trackear!</p>
+            </HabitContainer>
+        )
+    } else {
+        return (
+            <HabitContainer>
+                {habitList.map((elem, index) => <Habit
+                habit={elem}
+                key={index}
+                weekdays={weekdays}
+                deleteHabit={deleteHabit} />)}
+            </HabitContainer>
+        )
+    }
+}
+
+function Habit({ habit, weekdays, deleteHabit }) {
+    return (
+        <HabitCard>
+            <h1> {habit.name} </h1>
+            <Weekdays>
+                {weekdays.map((day, index) => <Weekday
+                key={index}
+                day={day}
+                days={habit.days}
+                number={index+1} />)}
+            </Weekdays>
+            <img src={trash} onClick={() => deleteHabit(habit.id)} />
+        </HabitCard>
+    )
+}
+
+function Weekday({ day, days, number }) {
+    if(days.includes(number)) {
+        return (
+            <Day bgcolor="#CFCFCF" color="#FFFFFF">
+                {day}
+            </Day>
+        )
+    } else {
+        return (
+            <Day bgcolor="#FFFFFF" color="#D4D4D4">
                 {day}
             </Day>
         )
@@ -173,6 +237,7 @@ const HabitForm = styled.div`
     width: 100%;
     height: 180px;
     padding: 18px;
+    margin: 10px auto;
     background: #FFFFFF;
     border-radius: 5px;
     position: relative;
@@ -205,7 +270,7 @@ const Weekdays = styled.div`
 const Day = styled.div`
     width: 30px;
     height: 30px;
-    margin: 8px 2px;
+    margin: 8px 2px 0 2px;
     background-color: ${props => props.bgcolor};
     border: 1px solid #D4D4D4;
     border-radius: 5px;
@@ -216,6 +281,43 @@ const Day = styled.div`
     align-items: center;
     cursor: pointer;
 `;
+
+const HabitContainer = styled.div`
+    width: 100%;
+    margin: 5px auto;
+    display: flex;
+    flex-direction: column;
+
+    p {
+        font-size: 18px;
+        color: #666666;
+        line-height: 1.2;
+    }
+`;
+
+const HabitCard = styled.div`
+    width: 100%;
+    height: 91px;
+    margin: 5px auto;
+    padding: 14px;
+    background-color: #FFFFFF;
+    border-radius: 5px;
+    position: relative;
+
+    h1 {
+        font-size: 20px;
+        color: #666666;
+        margin-bottom: 5px;
+    }
+
+    img {
+        width: 13px;
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        cursor: pointer;
+    }
+`
 
 const ActionButtons = styled.div`
     display: flex;
