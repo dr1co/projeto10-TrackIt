@@ -61,7 +61,7 @@ export default function Habits() {
                 getHabits();
             });
             request.catch((err) => {
-                console.log(err.response.status);
+                alert("Erro. Tente novamente!");
                 setDisabled(false);
             });
         }
