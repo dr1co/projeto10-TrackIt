@@ -1,10 +1,31 @@
 import styled from 'styled-components';
+import axios from 'axios';
+import { useContext, useEffect } from 'react'
 import { CircularProgressbar } from 'react-circular-progressbar';
 import { Link } from 'react-router-dom';
+
+import UserContext from '../contexts/UserContext.js'
+import PercentContext from '../contexts/PercentContext.js';
 
 import '../assets/css/progressbar.css';
 
 export default function Footer() {
+    const { user } = useContext(UserContext);
+    const { percent, setPercent } = useContext(PercentContext);
+
+    useEffect(() => {
+        const promise = axios.get('https://mock-api.bootcamp.respondeai.com.br/api/v2/trackit/habits/today', {
+            headers: {
+                'Authorization': `Bearer ${user.token}`
+            }
+        });
+        promise.then((res) => {
+            const doneList = res.data.filter((elem) => elem.done === true);
+            const num = Math.round((doneList.length) * 100 / (res.data.length));
+            setPercent(num);
+        });
+    }, [])
+
     return (
         <Container>
             <StyledLink to="/habitos">
@@ -13,7 +34,7 @@ export default function Footer() {
             <StyledLink to="/hoje">
                 <Progress>
                     <p> Hoje </p>
-                    <CircularProgressbar value={67} />
+                    <CircularProgressbar value={percent} />
                 </Progress>
             </StyledLink>
             <StyledLink to="/historico">

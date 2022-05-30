@@ -2,6 +2,7 @@ import { useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import styled from 'styled-components';
 import dayjs from 'dayjs';
+import 'dayjs/locale/pt-br';
 
 import Header from './Header.js';
 import Footer from './Footer.js';
@@ -13,12 +14,13 @@ import PercentContext from '../contexts/PercentContext.js';
 import check from '../assets/media/check.png';
 
 export default function Today() {
-    /* const now = dayjs;
-    console.log(now); */
+    const dayjsRequest = dayjs().locale('pt-br').format('dddd');
+    const weekday = dayjsRequest.charAt(0).toUpperCase() + dayjsRequest.slice(1);
+    const date = dayjs().format('DD/MM');
     const [habitList, setHabitList] = useState([]);
     const [subtitle, setSubtitle] = useState("Carregando hábitos...");
     const { user } = useContext(UserContext);
-    const { percent, setPercent } = useContext(PercentContext);
+    const { setPercent } = useContext(PercentContext);
     const [done, setDone] = useState([]);
 
     function getHabits() {
@@ -45,7 +47,7 @@ export default function Today() {
         });
         promise.catch(() => {
             setSubtitle("Não foi possível carregar os hábitos :/");
-        })
+        });
     }
 
     function toggleHabitCompletion(id, done) {
@@ -79,7 +81,7 @@ export default function Today() {
         <Header />
         <GreyBG />
         <Container>
-            <Title> Dia da semana, dia/mês </Title>
+            <Title> {weekday}, {date} </Title>
             <Subtitle color={done.length > 0 ? "#8FC549" : "#444444"}> {subtitle} </Subtitle>
             <HabitList>
                 {habitList.map((habit) => <Habit
