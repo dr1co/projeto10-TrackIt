@@ -10,6 +10,7 @@ import Today from './components/Today.js';
 import History from './components/History.js';
 
 import UserContext from './contexts/UserContext.js';
+import PercentContext from './contexts/PercentContext.js';
 
 function App() {
     const [user, setUser] = useState({
@@ -20,17 +21,20 @@ function App() {
         password: "",
         token: ""
     });
+    const [percent, setPercent] = useState(0);
 
     return (
         <BrowserRouter>
             <UserContext.Provider value={{ user, setUser }}>
-                <Routes>
-                    <Route path="/" element={<Login />} />
-                    <Route path="/cadastro" element={<Register />} />
-                    <Route path="/habitos" element={<Habits />} />
-                    <Route path="/hoje" element={<Today />} />
-                    <Route path="/historico" element={<History />} />
-                </Routes>
+                <PercentContext.Provider value={{ percent, setPercent }}>
+                    <Routes>
+                        <Route path="/" element={<Login />} />
+                        <Route path="/cadastro" element={<Register />} />
+                        <Route path="/habitos" element={<Habits />} />
+                        <Route path="/hoje" element={<Today />} />
+                        <Route path="/historico" element={<History />} />
+                    </Routes>
+                </PercentContext.Provider>
             </UserContext.Provider>
         </BrowserRouter>
     )

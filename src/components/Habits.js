@@ -1,10 +1,10 @@
 import axios from 'axios';
 import styled from 'styled-components';
 import { useContext, useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 
 import Header from './Header.js';
 import Footer from './Footer.js';
+import GreyBG from './Background.js';
 
 import UserContext from '../contexts/UserContext.js';
 
@@ -18,7 +18,7 @@ export default function Habits() {
         days: []
     })
 
-    const { user, setUser } = useContext(UserContext);
+    const { user } = useContext(UserContext);
     
     const weekdays = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
@@ -84,7 +84,7 @@ export default function Habits() {
     return (
         <>
             <Header />
-            <Background></Background>
+            <GreyBG />
             <Container>
                 <Title>
                     <h1> Meus hábitos </h1>
@@ -96,7 +96,7 @@ export default function Habits() {
                         {weekdays.map((day, index) => <SelectWeekday
                         key={index}
                         day={day}
-                        number={index+1}
+                        number={index}
                         habit={habit}
                         setHabit={setHabit} /> )}
                     </Weekdays>
@@ -126,13 +126,13 @@ function SelectWeekday({ day, number, habit, setHabit }) {
 
     if(array.includes(number)) {
         return (
-            <Day bgcolor="#CFCFCF" color="#FFFFFF" onClick={() => toggleDay(number)}>
+            <Day backgroundcolor="#CFCFCF" color="#FFFFFF" onClick={() => toggleDay(number)}>
                 {day}
             </Day>
         )
     } else {
         return (
-            <Day bgcolor="#FFFFFF" color="#D4D4D4" onClick={() => toggleDay(number)}>
+            <Day backgroundcolor="#FFFFFF" color="#D4D4D4" onClick={() => toggleDay(number)}>
                 {day}
             </Day>
         )
@@ -168,9 +168,9 @@ function Habit({ habit, weekdays, deleteHabit }) {
                 key={index}
                 day={day}
                 days={habit.days}
-                number={index+1} />)}
+                number={index} />)}
             </Weekdays>
-            <img src={trash} onClick={() => deleteHabit(habit.id)} />
+            <img src={trash} alt="delete" onClick={() => deleteHabit(habit.id)} />
         </HabitCard>
     )
 }
@@ -178,31 +178,22 @@ function Habit({ habit, weekdays, deleteHabit }) {
 function Weekday({ day, days, number }) {
     if(days.includes(number)) {
         return (
-            <Day bgcolor="#CFCFCF" color="#FFFFFF">
+            <Day backgroundcolor="#CFCFCF" color="#FFFFFF">
                 {day}
             </Day>
         )
     } else {
         return (
-            <Day bgcolor="#FFFFFF" color="#D4D4D4">
+            <Day backgroundcolor="#FFFFFF" color="#D4D4D4">
                 {day}
             </Day>
         )
     }
 }
 
-const Background = styled.div`
-    width: 100%;
-    height: 100%;
-    background-color: #E5E5E5;
-    position: fixed;
-    top: 0;
-    z-index: -1;
-`;
-
 const Container = styled.div`
     margin: 70px auto 101px auto;
-    padding: 10px 20px;
+    padding: 15px 20px;
 `;
 
 const Title = styled.div`
@@ -210,7 +201,6 @@ const Title = styled.div`
     display: flex;
     justify-content: space-between;
     align-items: center;
-    display: ${props => props.display};
 
     h1 {
         font-size: 23px;
@@ -271,7 +261,7 @@ const Day = styled.div`
     width: 30px;
     height: 30px;
     margin: 8px 2px 0 2px;
-    background-color: ${props => props.bgcolor};
+    background-color: ${props => props.backgroundcolor};
     border: 1px solid #D4D4D4;
     border-radius: 5px;
     font-size: 20px;
@@ -297,7 +287,8 @@ const HabitContainer = styled.div`
 
 const HabitCard = styled.div`
     width: 100%;
-    height: 91px;
+    min-height: 91px;
+    height: fit-content;
     margin: 5px auto;
     padding: 14px;
     background-color: #FFFFFF;
@@ -305,6 +296,7 @@ const HabitCard = styled.div`
     position: relative;
 
     h1 {
+        width: 94%;
         font-size: 20px;
         color: #666666;
         margin-bottom: 5px;
@@ -317,7 +309,7 @@ const HabitCard = styled.div`
         right: 14px;
         cursor: pointer;
     }
-`
+`;
 
 const ActionButtons = styled.div`
     display: flex;
