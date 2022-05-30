@@ -1,16 +1,24 @@
 import styled from 'styled-components';
 import { CircularProgressbar } from 'react-circular-progressbar';
+import { Link } from 'react-router-dom';
+
 import '../assets/css/progressbar.css';
 
 export default function Footer() {
     return (
         <Container>
-            <h1> Hábitos </h1>
-            <Progress>
-                <p> Hoje </p>
-                <CircularProgressbar value={67} />
-            </Progress>
-            <h1> Histórico </h1>
+            <StyledLink to="/habitos">
+                <h1> Hábitos </h1>
+            </StyledLink>
+            <StyledLink to="/hoje">
+                <Progress>
+                    <p> Hoje </p>
+                    <CircularProgressbar value={67} />
+                </Progress>
+            </StyledLink>
+            <StyledLink to="/historico">
+                <h1> Histórico </h1>
+            </StyledLink>
         </Container>
     )
 }
@@ -30,6 +38,10 @@ const Container = styled.div`
     h1 {
         font-size: 18px;
         color: #52B6FF;
+    }
+
+    h1:hover {
+        text-decoration: underline;
     }
 `;
 
@@ -52,3 +64,7 @@ const Progress = styled.div`
         transform: translate(-50%, -50%);
     }
 `;
+
+const StyledLink = styled(Link)`
+    text-decoration: none;
+`

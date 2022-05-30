@@ -1,22 +1,72 @@
 import axios from 'axios';
 import styled from 'styled-components';
-import { useContext, useState } from 'react';
+import { useContext, useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 import Header from './Header.js';
 import Footer from './Footer.js';
 
+import UserContext from '../contexts/UserContext.js';
+
 export default function Habits() {
     const [habitCreation, setHabitCreation] = useState(false);
+    const [habit, setHabit] = useState({
+        name: "",
+        days: []
+    })
+    const [habitList, setHabitList] = useState([]);
+
+    const { user, setUser } = useContext(UserContext);
+    
+    const weekdays = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
     function toggleHabitCreation() {
-        console.log('oi')
         if (habitCreation) {
             setHabitCreation(false);
         } else {
             setHabitCreation(true);
         }
     }
+
+    function cancelHabitCreation() {
+        setHabit({
+            name: "",
+            days: []
+        })
+        setHabitCreation(false);
+    }
+
+    function getHabits() {
+        const promise = axios.get('https://mock-api.bootcamp.respondeai.com.br/api/v2/trackit/habits', {
+            headers: {
+                'Authorization': `Bearer ${user.token}`
+            }
+        });
+        promise.then((res) => {
+            console.log(res);
+        })
+    }
+
+    function postHabit() {
+        if(habit.name !== "" && habit.days.length > 0) {
+            const request = axios.post('https://mock-api.bootcamp.respondeai.com.br/api/v2/trackit/habits', habit, {
+                headers: {
+                    'Authorization': `Bearer ${user.token}`
+                }
+            });
+            request.then((res) => {
+                console.log(res.data);
+                getHabits();    
+            });
+            request.catch((err) => {
+                console.log(err.response.status);
+            });
+        }
+    }
+
+    useEffect(() => {
+        getHabits();
+    }, []);
 
     return (
         <>
@@ -28,25 +78,53 @@ export default function Habits() {
                     <CreateHabit onClick={toggleHabitCreation}> + </CreateHabit>
                 </Title>
                 <HabitForm display={habitCreation ? "block" : "none"}>
-                    <InputHabit type="text" placeholder="nome do hábito" onChange={() => console.log('oi')} ></InputHabit>
+                    <InputHabit type="text" placeholder="nome do hábito" value={habit.name} onChange={(e) => setHabit({...habit, name: e.target.value})} />
                     <Weekdays>
-                        <Day> D </Day>
-                        <Day> S </Day>
-                        <Day> T </Day>
-                        <Day> Q </Day>
-                        <Day> Q </Day>
-                        <Day> S </Day>
-                        <Day> S </Day>
+                        {weekdays.map((day, index) => <Weekday
+                        key={index}
+                        day={day}
+                        number={index+1}
+                        habit={habit}
+                        setHabit={setHabit} /> )}
                     </Weekdays>
                     <ActionButtons>
-                        <Cancel onClick={() => console.log('cancela')}> Cancelar </Cancel>
-                        <Save onClick={() => console.log('salvar')}> Salvar </Save>
+                        <Cancel onClick={cancelHabitCreation}> Cancelar </Cancel>
+                        <Save onClick={postHabit}> Salvar </Save>
                     </ActionButtons>
                 </HabitForm>
             </Container>
             <Footer />
         </>
     )
+}
+
+function Weekday({ day, number, habit, setHabit }) {
+    const [selected, setSelected] = useState(false);
+
+    const array = habit.days;
+
+    function toggleDay(i) {
+        if(array.includes(i)) {
+            setHabit({...habit, days: array.filter((a) => a !== i)});
+        } else {
+            array.push(i)
+            setHabit({...habit, days: array});
+        }
+    }
+
+    if(array.includes(number)) {
+        return (
+            <Day bgcolor="#CFCFCF" color="#FFFFFF" onClick={() => toggleDay(number)}>
+                {day}
+            </Day>
+        )
+    } else {
+        return (
+            <Day bgcolor="#FFFFFF" color="#D4D4D4" onClick={() => toggleDay(number)}>
+                {day}
+            </Day>
+        )
+    }
 }
 
 const Background = styled.div`
@@ -128,11 +206,11 @@ const Day = styled.div`
     width: 30px;
     height: 30px;
     margin: 8px 2px;
-    background-color: #FFFFFF;
+    background-color: ${props => props.bgcolor};
     border: 1px solid #D4D4D4;
     border-radius: 5px;
     font-size: 20px;
-    color: #DBDBDB;
+    color: ${props => props.color};
     display: flex;
     justify-content: center;
     align-items: center;
@@ -168,4 +246,4 @@ const Save = styled.button`
     font-size: 16px;
     color: #FFFFFF;
     cursor: pointer;
-`
+`;
