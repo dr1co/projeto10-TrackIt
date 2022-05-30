@@ -4,12 +4,14 @@ import axios from 'axios';
 import styled from 'styled-components';
 
 import logo from '../assets/media/logo.png';
+import Loader from './Loader.js';
 
 import UserContext from '../contexts/UserContext.js';
 
 export default function Login() {
     const { setUser } = useContext(UserContext);
     const [error, setError] = useState("");
+    const [disabled, setDisabled] = useState(false);
     const [credentials, setCredentials] = useState({
         email: '',
         password: ''
@@ -20,6 +22,7 @@ export default function Login() {
     function login() {
         if (credentials.email !== "" && credentials.password !== "") {
             setError("");
+            setDisabled(true);
             const request = axios.post('https://mock-api.bootcamp.respondeai.com.br/api/v2/trackit/auth/login', credentials);
             request.then((res) => {
                 setUser({
@@ -30,6 +33,7 @@ export default function Login() {
                     password: res.data.password,
                     token: res.data.token
                 });
+                setDisabled(false);
                 navigate('/habitos');
             })
             request.catch((err) => {
@@ -54,6 +58,7 @@ export default function Login() {
                     default:
                         setError("Verifique os dados e tente novamente!");
                 }
+                setDisabled(false);
             })
         } else {
             setError("Favor preencher os campos faltantes acima!");
@@ -63,9 +68,9 @@ export default function Login() {
     return (
         <Container>
             <Image src={logo} alt="logo" />
-            <Input type="text" placeholder="email" onChange={(e) => setCredentials({ ...credentials, email: e.target.value })} value={credentials.email} />
-            <Input type="password" placeholder="senha" onChange={(e) => setCredentials({ ...credentials, password: e.target.value })} value={credentials.password} />
-            <LoginButton onClick={login}> Entrar </LoginButton>
+            <Input type="text" placeholder="email" onChange={(e) => setCredentials({ ...credentials, email: e.target.value })} value={credentials.email} disabled={disabled} color={disabled ? "#DBDBDB" : "#666666"} />
+            <Input type="password" placeholder="senha" onChange={(e) => setCredentials({ ...credentials, password: e.target.value })} value={credentials.password} disabled={disabled} color={disabled ? "#DBDBDB" : "#666666"} />
+            <LoginButton onClick={login} disabled={disabled} opacity={disabled ? "0.5" : "1"} cursor={disabled ? "default" : "pointer"}> {disabled ? <Loader /> : "Entrar"} </LoginButton>
             <StyledLink to="/cadastro">
                 <Register> Não tem uma conta? Cadastre-se! </Register>
             </StyledLink>
@@ -101,6 +106,7 @@ const Input = styled.input`
     border-radius: 5px;
     font-family: 'Lexend Deca', sans-serif;
     font-size: 20px;
+    color: ${props => props.color};
 
     &::placeholder {
         font-size: 20px;
@@ -114,11 +120,12 @@ const LoginButton = styled.button`
     margin: 5px auto;
     background-color: #52B6FF;
     color: #FFFFFF;
+    opacity: ${props => props.opacity};
     border: 0px solid transparent;
     border-radius: 5px;
     font-family: 'Lexend Deca', sans-serif;
     font-size: 21px;
-    cursor: pointer;
+    cursor: ${props => props.cursor};
 `;
 
 const Register = styled.p`

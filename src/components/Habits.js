@@ -5,6 +5,7 @@ import { useContext, useState, useEffect } from 'react';
 import Header from './Header.js';
 import Footer from './Footer.js';
 import GreyBG from './Background.js';
+import Loader from './Loader.js';
 
 import UserContext from '../contexts/UserContext.js';
 
@@ -13,10 +14,11 @@ import trash from '../assets/media/trashicon.png';
 export default function Habits() {
     const [habitCreation, setHabitCreation] = useState(false);
     const [habitList, setHabitList] = useState([]);
+    const [disabled, setDisabled] = useState(false);
     const [habit, setHabit] = useState({
         name: "",
         days: []
-    })
+    });
 
     const { user } = useContext(UserContext);
     
@@ -43,6 +45,7 @@ export default function Habits() {
 
     function postHabit() {
         if(habit.name !== "" && habit.days.length > 0) {
+            setDisabled(true);
             const request = axios.post('https://mock-api.bootcamp.respondeai.com.br/api/v2/trackit/habits', habit, {
                 headers: {
                     'Authorization': `Bearer ${user.token}`
@@ -54,10 +57,12 @@ export default function Habits() {
                     days: []
                 });
                 setHabitCreation(false);
+                setDisabled(false);
                 getHabits();
             });
             request.catch((err) => {
                 console.log(err.response.status);
+                setDisabled(false);
             });
         }
     }
@@ -65,14 +70,19 @@ export default function Habits() {
     function deleteHabit(id) {
         let confirmation = window.confirm("Tem certeza que deseja deletar este hábito? (essa ação não pode ser desfeita!");
         if (confirmation) {
+            setDisabled(true);
             const request = axios.delete(`https://mock-api.bootcamp.respondeai.com.br/api/v2/trackit/habits/${id}`, {
                 headers: {
                     'Authorization': `Bearer ${user.token}`
                 }
             });
-            request.then(getHabits);
+            request.then(() => {
+                setDisabled(false);
+                getHabits();
+            });
             request.catch((err) => {
                 console.log(err.response.status);
+                setDisabled(false);
             })
         }
     }
@@ -91,28 +101,29 @@ export default function Habits() {
                     <CreateHabit onClick={toggleHabitCreation}> + </CreateHabit>
                 </Title>
                 <HabitForm display={habitCreation ? "block" : "none"}>
-                    <InputHabit type="text" placeholder="nome do hábito" value={habit.name} onChange={(e) => setHabit({...habit, name: e.target.value})} />
+                    <InputHabit type="text" placeholder="nome do hábito" value={habit.name} onChange={(e) => setHabit({...habit, name: e.target.value})} disabled={disabled} color={disabled ? "#DBDBDB" : "#666666"} />
                     <Weekdays>
                         {weekdays.map((day, index) => <SelectWeekday
                         key={index}
                         day={day}
                         number={index}
                         habit={habit}
-                        setHabit={setHabit} /> )}
+                        setHabit={setHabit}
+                        disabled={disabled} /> )}
                     </Weekdays>
                     <ActionButtons>
-                        <Cancel onClick={toggleHabitCreation}> Cancelar </Cancel>
-                        <Save onClick={postHabit}> Salvar </Save>
+                        <Cancel onClick={toggleHabitCreation} disabled={disabled}> Cancelar </Cancel>
+                        <Save onClick={postHabit} disabled={disabled} opacity={disabled ? "0.5" : "1"} cursor={disabled ? "default" : "pointer"}> {disabled ? <Loader /> : "Salvar"} </Save>
                     </ActionButtons>
                 </HabitForm>
-                <HabitList habitList={habitList} weekdays={weekdays} deleteHabit={deleteHabit} />
+                <HabitList habitList={habitList} weekdays={weekdays} deleteHabit={deleteHabit} disabled={disabled} />
             </Container>
             <Footer />
         </>
     )
 }
 
-function SelectWeekday({ day, number, habit, setHabit }) {
+function SelectWeekday({ day, number, habit, setHabit, disabled }) {
     const array = habit.days;
 
     function toggleDay(i) {
@@ -126,20 +137,20 @@ function SelectWeekday({ day, number, habit, setHabit }) {
 
     if(array.includes(number)) {
         return (
-            <Day backgroundcolor="#CFCFCF" color="#FFFFFF" onClick={() => toggleDay(number)}>
+            <Day backgroundcolor="#CFCFCF" color="#FFFFFF" onClick={() => toggleDay(number)} disabled={disabled} cursor={disabled ? "default" : "pointer"} >
                 {day}
             </Day>
         )
     } else {
         return (
-            <Day backgroundcolor="#FFFFFF" color="#D4D4D4" onClick={() => toggleDay(number)}>
+            <Day backgroundcolor="#FFFFFF" color="#D4D4D4" onClick={() => toggleDay(number)} disabled={disabled} cursor={disabled ? "default" : "pointer"} >
                 {day}
             </Day>
         )
     }
 }
 
-function HabitList({ habitList, weekdays, deleteHabit }) {
+function HabitList({ habitList, weekdays, deleteHabit, disabled }) {
     if(habitList.length === 0) {
         return (
             <HabitContainer>
@@ -153,15 +164,16 @@ function HabitList({ habitList, weekdays, deleteHabit }) {
                 habit={elem}
                 key={index}
                 weekdays={weekdays}
-                deleteHabit={deleteHabit} />)}
+                deleteHabit={deleteHabit}
+                disabled={disabled} />)}
             </HabitContainer>
         )
     }
 }
 
-function Habit({ habit, weekdays, deleteHabit }) {
+function Habit({ habit, weekdays, deleteHabit, disabled }) {
     return (
-        <HabitCard>
+        <HabitCard cursor={disabled ? "default" : "pointer"}>
             <h1> {habit.name} </h1>
             <Weekdays>
                 {weekdays.map((day, index) => <Weekday
@@ -170,7 +182,7 @@ function Habit({ habit, weekdays, deleteHabit }) {
                 days={habit.days}
                 number={index} />)}
             </Weekdays>
-            <img src={trash} alt="delete" onClick={() => deleteHabit(habit.id)} />
+            <img src={trash} alt="delete" onClick={() => deleteHabit(habit.id)} disabled={disabled} />
         </HabitCard>
     )
 }
@@ -243,7 +255,7 @@ const InputHabit = styled.input`
     padding: 10px;
     font-family: 'Lexend Deca', sans-serif;
     font-size: 20px;
-    color: #666666;
+    color: ${props => props.color};
 
     &::placeholder {
         font-family: 'Lexend Deca', sans-serif;
@@ -269,7 +281,7 @@ const Day = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
-    cursor: pointer;
+    cursor: ${props => props.cursor};
 `;
 
 const HabitContainer = styled.div`
@@ -307,7 +319,7 @@ const HabitCard = styled.div`
         position: absolute;
         top: 14px;
         right: 14px;
-        cursor: pointer;
+        cursor: ${props => props.cursor};
     }
 `;
 
@@ -334,10 +346,11 @@ const Save = styled.button`
     width: 84px;
     height: 35px;
     background-color: #52B6FF;
+    opacity: ${props => props.opacity};
     border: 0px solid transparent;
     border-radius: 5px;
     font-family: 'Lexend Deca', sans-serif;
     font-size: 16px;
     color: #FFFFFF;
-    cursor: pointer;
+    cursor: ${props => props.cursor};
 `;

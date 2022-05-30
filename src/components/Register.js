@@ -3,11 +3,13 @@ import { Link , useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import styled from 'styled-components';
 
+import Loader from './Loader.js';
 import logo from '../assets/media/logo.png';
 
 export default function Register() {
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
+    const [disabled, setDisabled] = useState(false);
     const [register, setRegister] = useState({
         email: '',
         name: '',
@@ -19,9 +21,11 @@ export default function Register() {
 
     function registerUser() {
         if(register.email !== "" && register.name !== "" && register.image !== "" && register.password !== "") {
+            setDisabled(true);
             const request = axios.post('https://mock-api.bootcamp.respondeai.com.br/api/v2/trackit/auth/sign-up', register);
             request.then(() => {
                 setSuccess(true);
+                setDisabled(false);
                 setTimeout(() => {
                     navigate("/");
                 }, 3000);
@@ -40,6 +44,7 @@ export default function Register() {
                     default:
                         setError("Verifique os dados e tente novamente!")
                 }
+                setDisabled(false);
             })
         } else {
             setError("Favor preencher os campos faltantes acima!")
@@ -49,11 +54,11 @@ export default function Register() {
     return (
         <Container>
             <Image src={logo} alt="logo" />
-            <Input type="text" placeholder="email" onChange={(e) => setRegister({...register, email: e.target.value})} value={register.email} />
-            <Input type="password" placeholder="senha" onChange={(e) => setRegister({...register, password: e.target.value})} value={register.password} />
-            <Input type="text" placeholder="nome" onChange={(e) => setRegister({...register, name: e.target.value})} value={register.name} />
-            <Input type="text" placeholder="foto" onChange={(e) => setRegister({...register, image: e.target.value})} value={register.image} />
-            <RegisterButton onClick={registerUser}> Cadastrar </RegisterButton>
+            <Input type="text" placeholder="email" onChange={(e) => setRegister({...register, email: e.target.value})} value={register.email} disabled={disabled} color={disabled ? "#DBDBDB" : "#666666"} />
+            <Input type="password" placeholder="senha" onChange={(e) => setRegister({...register, password: e.target.value})} value={register.password} disabled={disabled} color={disabled ? "#DBDBDB" : "#666666"} />
+            <Input type="text" placeholder="nome" onChange={(e) => setRegister({...register, name: e.target.value})} value={register.name} disabled={disabled} color={disabled ? "#DBDBDB" : "#666666"} />
+            <Input type="text" placeholder="foto" onChange={(e) => setRegister({...register, image: e.target.value})} value={register.image} disabled={disabled} color={disabled ? "#DBDBDB" : "#666666"} />
+            <RegisterButton onClick={registerUser} disabled={disabled} opacity={disabled ? "0.5" : "1"} cursor={disabled ? "default" : "pointer"}> {disabled ? <Loader /> : "Cadastrar"} </RegisterButton>
             <StyledLink to="/">
                 <Login> Já tem uma conta? Faça login! </Login>
             </StyledLink>
@@ -90,6 +95,7 @@ const Input = styled.input`
     border-radius: 5px;
     font-family: 'Lexend Deca', sans-serif;
     font-size: 20px;
+    color: ${props => props.color};
 
     &::placeholder {
         font-size: 20px;
@@ -102,12 +108,13 @@ const RegisterButton = styled.button`
     height: 45px;
     margin: 5px auto;
     background-color: #52B6FF;
+    opacity: ${props => props.opacity};
     color: #FFFFFF;
     border: 0px solid transparent;
     border-radius: 5px;
     font-family: 'Lexend Deca', sans-serif;
     font-size: 21px;
-    cursor: pointer;
+    cursor: ${props => props.cursor};
 `;
 
 const Login = styled.p`

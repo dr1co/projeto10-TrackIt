@@ -7,6 +7,7 @@ import 'dayjs/locale/pt-br';
 import Header from './Header.js';
 import Footer from './Footer.js';
 import GreyBG from './Background.js';
+import Loader from './Loader.js';
 
 import UserContext from '../contexts/UserContext.js';
 import PercentContext from '../contexts/PercentContext.js';
@@ -19,9 +20,10 @@ export default function Today() {
     const date = dayjs().format('DD/MM');
     const [habitList, setHabitList] = useState([]);
     const [subtitle, setSubtitle] = useState("Carregando hábitos...");
+    const [done, setDone] = useState([]);
+    const [disabled, setDisabled] = useState(false);
     const { user } = useContext(UserContext);
     const { setPercent } = useContext(PercentContext);
-    const [done, setDone] = useState([]);
 
     function getHabits() {
         const promise = axios.get('https://mock-api.bootcamp.respondeai.com.br/api/v2/trackit/habits/today', {
@@ -32,7 +34,7 @@ export default function Today() {
         promise.then((res) => {
             setHabitList(res.data);
             if (res.data.length === 0) {
-                setSubtitle("Você não criou nenhum hábito ainda :(");
+                setSubtitle("Não há hábitos para o dia de hoje :(");
             } else {
                 const doneList = res.data.filter((elem) => elem.done === true)
                 setDone(doneList);
@@ -51,6 +53,7 @@ export default function Today() {
     }
 
     function toggleHabitCompletion(id, done) {
+        setDisabled(true);
         if (done) {
             const request = axios.post(`https://mock-api.bootcamp.respondeai.com.br/api/v2/trackit/habits/${id}/uncheck`,{}, {
                 headers: {
@@ -59,6 +62,7 @@ export default function Today() {
             });
             request.then(() => {
                 getHabits();
+                setDisabled(false);
             });
         } else {
             const request = axios.post(`https://mock-api.bootcamp.respondeai.com.br/api/v2/trackit/habits/${id}/check`,{}, {
@@ -68,6 +72,7 @@ export default function Today() {
             });
             request.then(() => {
                 getHabits();
+                setDisabled(false);
             });
         }
     }
@@ -91,7 +96,8 @@ export default function Today() {
                 done={habit.done}
                 currentSequence={habit.currentSequence}
                 highestSequence={habit.highestSequence}
-                toggleHabitCompletion={toggleHabitCompletion} />)}
+                toggleHabitCompletion={toggleHabitCompletion}
+                disabled={disabled} />)}
             </HabitList>
         </Container>
         <Footer />
@@ -99,14 +105,14 @@ export default function Today() {
     )
 }
 
-function Habit({ name, id, done, currentSequence, highestSequence, toggleHabitCompletion}) {
+function Habit({ name, id, done, currentSequence, highestSequence, toggleHabitCompletion, disabled }) {
     return (
         <HabitCard>
             <h1> {name} </h1>
             <p> Sequência atual: <Highlight color={done ? "#8FC549" : "#666666"}> {currentSequence} {currentSequence === 1 ? "dia" : "dias"} </Highlight> </p>
             <p> Melhor sequência: <Highlight color={currentSequence === highestSequence && done ? "#8FC549" : "#666666"}> {highestSequence} {highestSequence === 1 ? "dia" : "dias"} </Highlight> </p>
-            <Finish backgroundcolor={done ? "#8FC549" : "#EBEBEB" } onClick={() => toggleHabitCompletion(id, done)}>
-                <img src={check} alt="concluir hábito" />
+            <Finish backgroundcolor={done ? "#8FC549" : "#EBEBEB" } onClick={() => toggleHabitCompletion(id, done)} disabled={disabled} opacity={disabled ? "0.5" : "1"} cursor={disabled ? "default" : "pointer"}>
+                {disabled ? <Loader /> : <img src={check} alt="concluir hábito" />}
             </Finish>
         </HabitCard>
     )
@@ -169,12 +175,13 @@ const Finish = styled.button`
     width: 70px;
     height: 70px;
     background-color: ${props => props.backgroundcolor};
+    opacity: ${props => props.opacity};
     border: 0 solid transparent;
     border-radius: 5px;
     position: absolute;
     top: 12px;
     right: 12px;
-    cursor: pointer;
+    cursor: ${props => props.cursor};
 `;
 
 const Highlight = styled.strong`
